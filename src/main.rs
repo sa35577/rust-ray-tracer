@@ -6,7 +6,7 @@ use color::*;
 use vec3::*;
 use ray::*;
 
-fn hit_sphere(center: Point3, radius: f64, r: Ray) -> bool {
+fn hit_sphere(center: Point3, radius: f64, r: Ray) -> f64 {
     let oc = center - r.origin();
     // solving equation (C-P) dot (C-P) = r^2
     // becomes (-td + (C-Q)) dot (-td + (C-Q)) = r^2
@@ -14,16 +14,25 @@ fn hit_sphere(center: Point3, radius: f64, r: Ray) -> bool {
     // if discriminant is non-negative, there is a real solution for t and the ray intersects the sphere
     // and then we can colour the pixel red
     let a = r.direction().dot(&r.direction());
-    let b = 2.0 * oc.dot(&r.direction());
+    let b = -2.0 * oc.dot(&r.direction());
     let c = oc.dot(&oc) - radius * radius;
     let discriminant = b * b - 4.0 * a * c;
-    discriminant >= 0.0
+
+    if discriminant < 0.0 {
+        return -1.0;
+    }
+    // eprintln!("discriminant: {}", discriminant);
+    return (-b - discriminant.sqrt()) / (2.0 * a); // returns first intersection point
 }
 
 fn ray_color(r: Ray) -> Color {
     // Color::new(0.0, 0.0, 0.0)
-    if hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r) { // sphere that is in the center of the world with radius 0.5, check intersection with ray at any point
-        return Color::new(1.0, 0.0, 0.0);
+    let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r);
+    if (t > 0.0) { // sphere that is in the center of the world with radius 0.5, check intersection with ray at any point
+        // return Color::new(1.0, 0.0, 0.0);
+        // eprintln!("hit sphere");
+        let N = (r.at(t) - Vec3::new(0.0, 0.0, -1.0)).unit_vector(); // unit vector from center of sphere to intersection point, t is the solution of where the ray intersects the sphere
+        return 0.5 * Color::new(N.x() + 1.0, N.y() + 1.0, N.z() + 1.0);
     }
     let unit_direction = r.direction().unit_vector();
     let a = 0.5 * (unit_direction.y() + 1.0);
