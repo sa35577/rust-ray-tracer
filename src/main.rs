@@ -2,16 +2,12 @@ mod color;
 mod vec3;
 mod ray;
 
-use color::{Color, write_color};
-use vec3::{Vec3, Point3};
-use ray::Ray;
-
 // use color::*;
 // use vec3::*;
 // use ray::*;
 
 mod rtweekend;
-use crate::rtweekend::*;
+use rtweekend::{Color, Vec3, Point3, Ray, write_color};
 
 fn hit_sphere(center: Point3, radius: f64, r: Ray) -> f64 {
     let oc = center - r.origin();
