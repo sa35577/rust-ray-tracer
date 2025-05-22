@@ -1,5 +1,4 @@
 use crate::hittable::{Hittable, HitRecord};
-use crate::rtweekend::*;
 use crate::ray::Ray;
 
 pub struct HittableList {
@@ -18,7 +17,6 @@ impl HittableList {
     pub fn clear(&mut self) {
         self.objects.clear();
     }
-    
 }
 
 impl Hittable for HittableList {

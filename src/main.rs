@@ -34,20 +34,20 @@ fn hit_sphere(center: Point3, radius: f64, r: Ray) -> f64 {
     return (half_b - discriminant.sqrt()) / a; // returns first intersection point
 }
 
-fn ray_color(r: Ray) -> Color {
-    // // Color::new(0.0, 0.0, 0.0)
-    let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r);
-    if t > 0.0 { // sphere that is in the center of the world with radius 0.5, check intersection with ray at any point
-        // return Color::new(1.0, 0.0, 0.0);
-        // eprintln!("hit sphere");
-        let N = (r.at(t) - Vec3::new(0.0, 0.0, -1.0)).unit_vector(); // unit vector from center of sphere to intersection point, t is the solution of where the ray intersects the sphere
-        return 0.5 * Color::new(N.x() + 1.0, N.y() + 1.0, N.z() + 1.0);
-    }
-
-    // let mut rec = HitRecord::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0), 0.0, false);
-    // if world.hit(&r, 0.0, INFINITY, &mut rec) {
-    //     return 0.5 * (rec.normal + Vec3::new(1.0, 1.0, 1.0));
+fn ray_color(r: Ray, world: &dyn Hittable) -> Color {
+    // // // Color::new(0.0, 0.0, 0.0)
+    // let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r);
+    // if t > 0.0 { // sphere that is in the center of the world with radius 0.5, check intersection with ray at any point
+    //     // return Color::new(1.0, 0.0, 0.0);
+    //     // eprintln!("hit sphere");
+    //     let N = (r.at(t) - Vec3::new(0.0, 0.0, -1.0)).unit_vector(); // unit vector from center of sphere to intersection point, t is the solution of where the ray intersects the sphere
+    //     return 0.5 * Color::new(N.x() + 1.0, N.y() + 1.0, N.z() + 1.0);
     // }
+
+    let mut rec = HitRecord::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0), 0.0, false);
+    if world.hit(&r, 0.0, INFINITY, &mut rec) {
+        return 0.5 * (rec.normal + Vec3::new(1.0, 1.0, 1.0));
+    }
     
     let unit_direction = r.direction().unit_vector();
     let a = 0.5 * (unit_direction.y() + 1.0);
@@ -100,7 +100,7 @@ fn main() {
             let pixel_center = pixel00_loc + (i as f64 * pixel_delta_u) + (j as f64 * pixel_delta_v);
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(camera_center, ray_direction);
-            let pixel_color = ray_color(r);
+            let pixel_color = ray_color(r, &world);
             // let pixel_color = ray_color(r, &world);
             write_color(&mut std::io::stdout(), pixel_color);
         }
