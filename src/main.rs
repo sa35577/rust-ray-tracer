@@ -1,13 +1,19 @@
 mod color;
 mod vec3;
 mod ray;
+mod hittable;
+mod sphere;
+mod hittable_list;
 
 // use color::*;
 // use vec3::*;
 // use ray::*;
 
 mod rtweekend;
-use rtweekend::{Color, Vec3, Point3, Ray, write_color};
+use rtweekend::{Color, Vec3, Point3, Ray, write_color, INFINITY};
+use hittable::{Hittable, HitRecord};
+use hittable_list::HittableList;
+use sphere::Sphere;
 
 fn hit_sphere(center: Point3, radius: f64, r: Ray) -> f64 {
     let oc = center - r.origin();
@@ -29,7 +35,7 @@ fn hit_sphere(center: Point3, radius: f64, r: Ray) -> f64 {
 }
 
 fn ray_color(r: Ray) -> Color {
-    // Color::new(0.0, 0.0, 0.0)
+    // // Color::new(0.0, 0.0, 0.0)
     let t = hit_sphere(Point3::new(0.0, 0.0, -1.0), 0.5, r);
     if t > 0.0 { // sphere that is in the center of the world with radius 0.5, check intersection with ray at any point
         // return Color::new(1.0, 0.0, 0.0);
@@ -37,6 +43,12 @@ fn ray_color(r: Ray) -> Color {
         let N = (r.at(t) - Vec3::new(0.0, 0.0, -1.0)).unit_vector(); // unit vector from center of sphere to intersection point, t is the solution of where the ray intersects the sphere
         return 0.5 * Color::new(N.x() + 1.0, N.y() + 1.0, N.z() + 1.0);
     }
+
+    // let mut rec = HitRecord::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0), 0.0, false);
+    // if world.hit(&r, 0.0, INFINITY, &mut rec) {
+    //     return 0.5 * (rec.normal + Vec3::new(1.0, 1.0, 1.0));
+    // }
+    
     let unit_direction = r.direction().unit_vector();
     let a = 0.5 * (unit_direction.y() + 1.0);
     // blue to white gradient
@@ -50,17 +62,22 @@ fn main() {
     let image_width = 400;
     let image_height = (image_width as f64 / aspect_ratio) as i32;
 
+    // World
+    let mut world = HittableList::new(Vec::new());
+    world.add(Box::new(Sphere::new(Point3::new(0.0, 0.0, -1.0), 0.5)));
+    world.add(Box::new(Sphere::new(Point3::new(0.0, -100.5, -1.0), 100.0)));
+
     // Camera
     let focal_length = 1.0;
     let viewport_height = 2.0;
-    let viewport_width = viewport_height * aspect_ratio;
+    let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
     let camera_center = Point3::new(0.0, 0.0, 0.0);
 
     // Calculate the vectors across the horizontal and down the vertical viewport edges
     let viewport_u = Vec3::new(viewport_width, 0.0, 0.0);
     let viewport_v = Vec3::new(0.0, -viewport_height, 0.0);
 
-    // Calculate the horizontal and vertical delta vectors from the top left corner of the viewport to its bottom right corner
+    // Calculate the horizontal and vertical delta vectors from pixel to pixel
     let pixel_delta_u = viewport_u / image_width as f64;
     let pixel_delta_v = viewport_v / image_height as f64;
 
@@ -84,6 +101,7 @@ fn main() {
             let ray_direction = pixel_center - camera_center;
             let r = Ray::new(camera_center, ray_direction);
             let pixel_color = ray_color(r);
+            // let pixel_color = ray_color(r, &world);
             write_color(&mut std::io::stdout(), pixel_color);
         }
     }
