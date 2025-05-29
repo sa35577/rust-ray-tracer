@@ -67,7 +67,7 @@ impl Camera {
         let mut rec = HitRecord::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0), 0.0, false);
         if world.hit(&r, Interval::new(0.001, INFINITY), &mut rec) {
             // return 0.5 * (rec.normal + Vec3::new(1.0, 1.0, 1.0));
-            let direction = Vec3::random_on_hemisphere(&rec.normal);
+            let direction = rec.normal + Vec3::random_unit_vector();
             return 0.5 * self.ray_color(Ray::new(rec.p, direction), depth - 1, world);
         }
         
