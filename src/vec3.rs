@@ -5,16 +5,18 @@ use std::ops::IndexMut;
 use std::ops::Sub;
 use std::ops::Mul;
 use std::ops::Div;
+use std::ops::AddAssign;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Vec3 {
     e: [f64; 3],
 }
 
 pub type Point3 = Vec3;
 
+
 impl Vec3 {
-    pub fn new(e0: f64, e1: f64, e2: f64) -> Vec3 {
+    pub fn new(e0: f64, e1: f64, e2: f64) -> Self {
         Vec3 { e: [e0, e1, e2] }
     }
 
@@ -60,6 +62,14 @@ impl Add for Vec3 {
 
     fn add(self, other: Vec3) -> Vec3 {
         Vec3::new(self.x() + other.x(), self.y() + other.y(), self.z() + other.z())
+    }
+}
+
+impl AddAssign for Vec3 {
+    fn add_assign(&mut self, other: Vec3) {
+        self.e[0] += other.e[0];
+        self.e[1] += other.e[1];
+        self.e[2] += other.e[2];
     }
 }
 

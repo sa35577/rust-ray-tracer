@@ -1,10 +1,13 @@
 use crate::rtweekend::{Color, Vec3, Point3, Ray, write_color, INFINITY};
 use crate::hittable::{Hittable, HitRecord};
 use crate::interval::Interval;
+use rand::Rng;
 
 pub struct Camera {
     pub aspect_ratio: f64,
     pub image_width: i32,
+    pub samples_per_pixel: i32,
+    pixel_samples_scale: f64,
     image_height: i32,
     center: Point3,
     pixel00_loc: Point3,
@@ -17,6 +20,8 @@ impl Camera {
         Camera {
             aspect_ratio: 1.0,
             image_width: 100,
+            samples_per_pixel: 10,
+            pixel_samples_scale: 1.0,
             image_height: 0,
             center: Point3::new(0.0, 0.0, 0.0),
             pixel00_loc: Point3::new(0.0, 0.0, 0.0),
@@ -29,6 +34,9 @@ impl Camera {
         // Calculate the image height, and ensure that it's at least 1
         self.image_height = (self.image_width as f64 / self.aspect_ratio) as i32;
         self.image_height = if self.image_height < 1 { 1 } else { self.image_height };
+
+        self.pixel_samples_scale = 1.0 / (self.samples_per_pixel as f64);
+        eprintln!("pixel_samples_scale: {}", self.pixel_samples_scale);
 
         // Camera
         let focal_length = 1.0;
@@ -62,6 +70,23 @@ impl Camera {
         Color::new(1.0, 1.0, 1.0) * (1.0 - a) + Color::new(0.5, 0.7, 1.0) * a
     }
 
+    fn sample_square(&self) -> Vec3 {
+        let mut rng = rand::thread_rng();
+        let x = -0.5 + rng.gen_range(0.0..1.0);
+        let y = -0.5 + rng.gen_range(0.0..1.0);
+        // eprintln!("x: {}, y: {}", x, y);
+        Vec3::new(x, y, 0.0)
+    }
+
+    fn get_ray(&self, i: i32, j: i32) -> Ray {
+        let offset = self.sample_square();
+        let pixel_sample = self.pixel00_loc + 
+            ((i as f64 + offset.x()) * self.pixel_delta_u) + 
+            ((j as f64 + offset.y()) * self.pixel_delta_v);
+        let ray_direction = pixel_sample - self.center;
+        Ray::new(self.center, ray_direction)
+    }
+
     pub fn render(&mut self, world: &dyn Hittable) {
         self.initialize();
 
@@ -70,12 +95,20 @@ impl Camera {
 
         for j in 0..self.image_height {
             eprintln!("\rScanlines remaining: {}", self.image_height - j);
+            // eprintln!("samples_per_pixel: {}", self.samples_per_pixel);
             for i in 0..self.image_width {
-                let pixel_center = self.pixel00_loc + (i as f64 * self.pixel_delta_u) + (j as f64 * self.pixel_delta_v);
-                let ray_direction = pixel_center - self.center;
-                let r = Ray::new(self.center, ray_direction);
-                let pixel_color = self.ray_color(r, world);
-                write_color(&mut std::io::stdout(), pixel_color);
+                let mut pixel_color = Color::new(0.0, 0.0, 0.0);
+                for _ in 0..self.samples_per_pixel {
+                    let r = self.get_ray(i, j);
+                    pixel_color += self.ray_color(r, world);
+                }
+                // Average the samples
+                // let scale = 1.0 / self.samples_per_pixel as f64;
+                // pixel_color = pixel_color * scale;
+
+                let result = self.pixel_samples_scale * pixel_color;
+                // eprintln!("result: x: {}, y: {}, z: {}", result.x(), result.y(), result.z());
+                write_color(&mut std::io::stdout(), result);
             }
         }
         eprintln!("Done.");
