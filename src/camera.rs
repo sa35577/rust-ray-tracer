@@ -59,18 +59,23 @@ impl Camera {
         self.pixel00_loc = viewport_upper_left + 0.5 * (self.pixel_delta_u + self.pixel_delta_v);
     }
 
-    fn ray_color(&self, r: Ray, depth: i32, world: &dyn Hittable) -> Color {
+    fn ray_color(&self, r: &Ray, depth: i32, world: &dyn Hittable) -> Color {
         if depth <= 0 {
             return Color::new(0.0, 0.0, 0.0);
         }
 
         let mut rec = HitRecord::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0), 0.0, false);
-        if world.hit(&r, Interval::new(0.001, INFINITY), &mut rec) {
-            // return 0.5 * (rec.normal + Vec3::new(1.0, 1.0, 1.0));
-            let direction = rec.normal + Vec3::random_unit_vector();
-            return 0.5 * self.ray_color(Ray::new(rec.p, direction), depth - 1, world);
+        if world.hit(r, Interval::new(0.001, INFINITY), &mut rec) {
+            let mut scattered = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 0.0));
+            let mut attenuation = Color::new(0.0, 0.0, 0.0);
+            if let Some(mat) = &rec.mat {
+                if mat.scatter(r, &rec, &mut attenuation, &mut scattered) {
+                    return attenuation * self.ray_color(&scattered, depth - 1, world);
+                }
+            }
+            return Color::new(0.0, 0.0, 0.0);
         }
-        
+
         let unit_direction = r.direction().unit_vector();
         let a = 0.5 * (unit_direction.y() + 1.0);
         // blue to white gradient
@@ -108,11 +113,8 @@ impl Camera {
                 let mut pixel_color = Color::new(0.0, 0.0, 0.0);
                 for _ in 0..self.samples_per_pixel {
                     let r = self.get_ray(i, j);
-                    pixel_color += self.ray_color(r, self.max_depth, world);
+                    pixel_color += self.ray_color(&r, self.max_depth, world);
                 }
-                // Average the samples
-                // let scale = 1.0 / self.samples_per_pixel as f64;
-                // pixel_color = pixel_color * scale;
 
                 let result = self.pixel_samples_scale * pixel_color;
                 // eprintln!("result: x: {}, y: {}, z: {}", result.x(), result.y(), result.z());

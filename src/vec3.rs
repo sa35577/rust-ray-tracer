@@ -6,7 +6,10 @@ use std::ops::Sub;
 use std::ops::Mul;
 use std::ops::Div;
 use std::ops::AddAssign;
-use crate::rtweekend::{random_double, random_double_range};
+use std::ops::SubAssign;
+use std::ops::MulAssign;
+use std::ops::DivAssign;
+use crate::rtweekend::{random_double_range};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Vec3 {
@@ -39,6 +42,11 @@ impl Vec3 {
 
     pub fn length_squared(&self) -> f64 {
         self.dot(self)
+    }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.e[0].abs() < s && self.e[1].abs() < s && self.e[2].abs() < s
     }
 
     pub fn dot(&self, other: &Vec3) -> f64 {
@@ -87,6 +95,10 @@ impl Vec3 {
             -on_unit_sphere
         }
     }
+
+    pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+        *v - 2.0 * v.dot(n) * *n
+    }
     
 }
 
@@ -122,6 +134,14 @@ impl Sub for Vec3 {
     }
 }
 
+impl SubAssign for Vec3 {
+    fn sub_assign(&mut self, other: Vec3) {
+        self.e[0] -= other.e[0];
+        self.e[1] -= other.e[1];
+        self.e[2] -= other.e[2];
+    }
+}
+
 impl Mul<f64> for Vec3 {
     type Output = Vec3;
 
@@ -130,11 +150,33 @@ impl Mul<f64> for Vec3 {
     }
 }
 
+impl MulAssign<f64> for Vec3 {
+    fn mul_assign(&mut self, t: f64) {
+        self.e[0] *= t;
+        self.e[1] *= t;
+        self.e[2] *= t;
+    }
+}
+
 impl Div<f64> for Vec3 {
     type Output = Vec3;
 
     fn div(self, rhs: f64) -> Vec3 {
         Vec3::new(self.x() / rhs, self.y() / rhs, self.z() / rhs)
+    }
+}
+
+impl DivAssign<f64> for Vec3 {
+    fn div_assign(&mut self, t: f64) {
+        *self *= 1.0 / t;
+    }
+}
+
+impl Mul<Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3::new(self.x() * other.x(), self.y() * other.y(), self.z() * other.z())
     }
 }
 
