@@ -1,5 +1,3 @@
-// use crate::ray::*;
-// use crate::vec3::*;
 use crate::rtweekend::*;
 use crate::material::Material;
 use crate::interval::Interval;

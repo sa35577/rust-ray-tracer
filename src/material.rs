@@ -5,7 +5,6 @@ use crate::color::*;
 
 pub trait Material {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool;
-    // fn clone_box(&self) -> Box<dyn Material>; //???
 }
 
 #[derive(Clone)]
@@ -30,35 +29,30 @@ impl Material for Lambertian {
         *attenuation = self.albedo;
         true
     }
-
-    // fn clone_box(&self) -> Box<dyn Material> {
-    //     Box::new(self.clone())
-    // }
 }
 
 #[derive(Clone)]
 pub struct Metal {
     albedo: Color,
+    fuzz: f64,
 }
 
 impl Metal {
-    pub fn new(a: Color) -> Self {
-        Self { albedo: a }
+    pub fn new(a: Color, f: f64) -> Self {
+        Self { albedo: a, fuzz: if f < 1.0 { f } else { 1.0 } }
     }
 }
 
 impl Material for Metal {
     fn scatter(&self, r_in: &Ray, rec: &HitRecord, attenuation: &mut Color, scattered: &mut Ray) -> bool {
         // eprintln!("Metal::scatter");
-        let reflected = Vec3::reflect(&r_in.direction(), &rec.normal);
+        let mut reflected = Vec3::reflect(&r_in.direction(), &rec.normal);
+        reflected = reflected.unit_vector() + self.fuzz * Vec3::random_unit_vector();
+        
         *scattered = Ray::new(rec.p, reflected);
         *attenuation = self.albedo;
-        true
+        scattered.direction().dot(&rec.normal) > 0.0
     }
-
-    // fn clone_box(&self) -> Box<dyn Material> {
-    //     Box::new(self.clone())
-    // }
 }
 
 
