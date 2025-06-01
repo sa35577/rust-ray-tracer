@@ -53,6 +53,8 @@ fn main() {
     camera.lookfrom = Point3::new(-2.0, 2.0, 1.0);
     camera.lookat = Point3::new(0.0, 0.0, -1.0);
     camera.vup = Vec3::new(0.0, 1.0, 0.0);
+    camera.defocus_angle = 10.0;
+    camera.focus_dist = 3.4;
     
     camera.render(&world);
 }
