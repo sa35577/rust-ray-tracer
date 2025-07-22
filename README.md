@@ -34,6 +34,5 @@ cargo run --release > image.ppm
 ## Notes
 - Materials and objects are shared using `Rc` for efficient memory usage.
 - The code is structured to be as close as possible to the C++ "Ray Tracing in One Weekend" book, but idiomatic to Rust.
-- For best performance, use the `--release` flag.
 
 Adapted from the [_Ray Tracing in One Weekend_](https://raytracing.github.io/books/RayTracingInOneWeekend.html) book.
